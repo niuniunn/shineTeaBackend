@@ -24,22 +24,7 @@ export default class Shop extends React.Component{
       },
       currentPage: 1,
       total: 0,
-      dataSource: [
-        {
-          key: 1,
-          shopId: 38324,
-          shopName: '闲茶成信大店',
-          address: '成都信息工程大学',
-          addressDetail: "L4512号",
-          phoneNumber: '18030565437',
-          openTime: '10:00',
-          closeTime: '22:00',
-          isOpen: 1,
-          shopRemark: '备注',
-          latitude: '',
-          longitude: '',
-        },
-      ]
+      dataSource: []
     }
   }
 
@@ -166,13 +151,6 @@ export default class Shop extends React.Component{
             <Col span={5}>
               <Form.Item label='门店名称'>
                 {getFieldDecorator('shopName',{initialValue: ''})(
-                  <Input />
-                )}
-              </Form.Item>
-            </Col>
-            <Col span={4}>
-              <Form.Item label='门店编号'>
-                {getFieldDecorator('shopId',{initialValue: ''})(
                   <Input />
                 )}
               </Form.Item>

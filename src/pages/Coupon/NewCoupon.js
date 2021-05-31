@@ -12,6 +12,9 @@ export default class NewCoupon extends React.Component{
     e.preventDefault();
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
+        values.startTime = values.time[0].format("yyyy-MM-DD");
+        values.endTime = values.time[1].format("yyyy-MM-DD");
+        delete values.time;
         console.log('Received values of form: ', values);
       }
     });
@@ -38,7 +41,7 @@ export default class NewCoupon extends React.Component{
                       message: '请输入使用条件',
                     },
                   ],
-                })(<Input style={{width: 200}} placeholder="满减金额" />)}
+                })(<InputNumber style={{width: 200}} placeholder="满减金额" min={0} max={999} step={1} />)}
               </Form.Item>
             </Col>
           </Row>
@@ -62,7 +65,7 @@ export default class NewCoupon extends React.Component{
                       message: '请输入优惠金额',
                     },
                   ],
-                })(<Input style={{width: 200}} />)}
+                })(<InputNumber style={{width: 200}} placeholder="请输入优惠金额" min={0} max={50} step={1} />)}
               </Form.Item>
             </Col>
           </Row>

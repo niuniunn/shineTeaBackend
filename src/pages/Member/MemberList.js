@@ -1,9 +1,13 @@
 import React from "react";
 import {Card, Typography, Form, Row, Col, Input, Select, Button, Table} from "antd";
 import styles from "@/assets/common.less";
+import {connect} from "dva";
 
 const { Title } = Typography;
 
+@connect(({member})=>({
+  memberPage: member.memberPage,
+}))
 @Form.create()
 export default class MemberList extends React.Component{
   constructor() {
@@ -40,8 +44,37 @@ export default class MemberList extends React.Component{
           points: 100,
           createTime: '2021-04-12 15:33:12'
         },
-      ]
+      ],
+      searchConditions: {
+        page: 1,
+        size: 10,
+        nickname: '',
+        tel: ''
+      },
+      currentPage: 1,
+      total: 0,
     }
+  }
+
+  componentDidMount() {
+    this.getList();
+  }
+  getList = ()=> {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'member/getMemberPage',
+      payload: {
+        ...this.state.searchConditions,
+        page: this.state.currentPage,
+      }
+    }).then(()=>{
+      const memberPage = this.props.memberPage;
+      this.setState({
+        dataSource: memberPage.data,
+        currentPage: memberPage.page,
+        total: memberPage.total
+      })
+    })
   }
 
   handleSearch = e => {
@@ -75,14 +108,13 @@ export default class MemberList extends React.Component{
       },
       {
         title: '手机号',
-        dataIndex: 'tel',
-        key: 'tel',
+        dataIndex: 'phoneNumber',
+        key: 'phoneNumber',
       },
       {
         title: '微信openid',
         dataIndex: 'openid',
         key: 'openid',
-        align: 'center',
       },
       {
         title: '性别',
@@ -107,12 +139,6 @@ export default class MemberList extends React.Component{
         title: '积分',
         dataIndex: 'points',
         key: 'points',
-        align: 'center',
-      },
-      {
-        title: '注册日期',
-        dataIndex: 'createTime',
-        key: 'createTime',
         align: 'center',
       }
     ];

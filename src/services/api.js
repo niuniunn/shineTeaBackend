@@ -165,3 +165,23 @@ export async function updateProductStatus(params) {
     data: stringify(params),
   });
 }
+
+export async function getMemberPage(params) {
+  return request('api/shinetea/member/page', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function newCoupon(params) {
+  return request('api/shinetea/coupon/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
