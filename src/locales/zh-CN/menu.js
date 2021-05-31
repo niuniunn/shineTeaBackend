@@ -1,0 +1,25 @@
+export default {
+  'menu.home': '首页',
+  'menu.login': '登录',
+  'menu.noauth': '无需权限',
+  'menu.not-permission': '没有权限',
+  'menu.not-find': '页面找不到',
+  'menu.server-error': '服务器错误',
+  'menu.account.logout': '退出登录',
+  'app.exception.description.404': '页面跑丢了...',
+  'app.exception.description.403': '对不起，您无权访问此页面...',
+  'app.exception.description.500': '对不起，服务器内部出错了...',
+
+  'menu.newShop': '新增门店',
+  'menu.shopManage': '门店管理',
+  'menu.board': '销售看板',
+  'menu.shopDetail': '门店详情',
+  'menu.category': '分类管理',
+  'menu.goodsList': '商品管理',
+  'menu.newGoods': '新增商品',
+  'menu.orderList': '订单管理',
+  'menu.orderDetail': '订单详情',
+  'menu.memberList': '会员管理',
+  'menu.newCoupon': '优惠券',
+
+};
