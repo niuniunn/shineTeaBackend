@@ -2,104 +2,115 @@ import React from "react";
 import {Button, Card, Col, Form, Icon, Input, message, Modal, Row, Select, Table, Typography, Upload} from "antd";
 import styles from "@/assets/common.less";
 import {router} from "umi";
+import {connect} from "dva";
 
 const { Title } = Typography;
 const {Option} = Select;
 
+@connect(({product,category})=>({
+  productPage: product.productPage,
+  categoryList: category.categoryList,
+}))
 @Form.create()
 export default class GoodsList extends React.Component{
   constructor(props) {
     super(props);
     this.state = {
-      dataSource: [
-        {
-          key: '0',
-          id: 22,
-          name: '四季奶青',
-          type: '人气奶茶',
-          desc: '这是产品描述，这是产品描述，这是产品描述，这是产品描述，这是产品描述，这是产品描述，这是产品描述，这是产品描述······',
-          status: 1,
-          price: 16.5,
-          picture: 'https://7368-shinetea-9gye2q4w52899527-1304969792.tcb.qcloud.la/tempPic/QQ%E5%9B%BE%E7%89%8720210328204721.png',
-          specification: [
-            {
-              title: "甜度",
-              specId: 1,
-              specDetail: [
-                {
-                  id: 11,
-                  name: "无糖",
-                  price: 0,
-                },
-                {
-                  id: 12,
-                  name: "微糖",
-                  price: 0,
-                },
-                {
-                  id: 13,
-                  name: "半糖",
-                  price: 0,
-                },
-                {
-                  id: 14,
-                  name: "少糖",
-                  price: 0,
-                },
-                {
-                  id: 15,
-                  name: "换蜂蜜",
-                  price: 2,
-                }
-              ]
-            },
-            {
-              title: "温度",
-              specId: 2,
-              specDetail: [
-                {
-                  id:21,
-                  name: "正常冰",
-                  price: 0,
-                }
-              ]
-            },
-            {
-              title: "小料",
-              id: 3,
-              specDetail: [
-                {
-                  id: 31,
-                  name: "珍珠",
-                  price: 0,
-                },
-                {
-                  id: 32,
-                  name: "焦糖布丁",
-                  price: 2,
-                },
-                {
-                  id: 33,
-                  name: "芋泥",
-                  price: 3,
-                }
-              ]
-            }
-          ],
-        }
-      ],
+      searchConditions: {
+        page: 1,
+        size: 10,
+        name: '',
+        type: '1',
+        status: -1
+      },
+      currentPage: 1,
+      total: 0,
+      dataSource: [],
+      categoryList: [],
+      categoryMap: {},
       visible: true,
     }
   }
   componentWillMount() {
-
+    this.getCategoryList();
+    this.getList();
   }
-
+  getCategoryList = ()=> {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'category/getCategoryList'
+    }).then(()=>{
+      const categoryList = this.props.categoryList;
+      let categoryMap = {};
+      categoryList.map(item => {
+        categoryMap[item.categoryType] = item.categoryName;
+      })
+      console.log(categoryMap);
+      this.setState({
+        categoryList,
+        categoryMap
+      })
+    })
+  }
+  getList = ()=> {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'product/getProductPage',
+      payload: {
+        ...this.state.searchConditions,
+        page: this.state.currentPage,
+      }
+    }).then(()=>{
+      const productPage = this.props.productPage;
+      this.setState({
+        dataSource: productPage.data,
+        currentPage: productPage.page,
+        total: productPage.total
+      })
+    })
+  }
   newGoods = ()=> {
     router.push('/goods/newGoods?type=new');
   }
+  handleSearch = e => {
+    e.preventDefault();
+    this.props.form.validateFields((err, values) => {
+      this.setState({
+        searchConditions: {...this.state.searchConditions,...values}
+      },()=>{
+        this.getList();
+      })
+    });
+  };
+  handleReset = () => {
+    this.props.form.resetFields();
+  };
+  editProduct = (record) => {
+    router.push('/goods/newGoods?type=edit' + `&id=${record.productId}`);
+  }
+  delProduct = id => {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'product/delProduct',
+      payload: {id}
+    }).then(()=>{
+      this.getList();
+    })
+  }
+  updateProductStatus = record => {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'product/updateProductStatus',
+      payload: {
+        id: record.productId,
+        status: record.productStatus?0:1
+      }
+    }).then(()=>{
+      this.getList();
+    })
+  }
   render() {
-    const {dataSource} = this.state;
+    const {dataSource, categoryList, categoryMap} = this.state;
     const columns = [
       {
         title: '序号',
@@ -111,42 +122,42 @@ export default class GoodsList extends React.Component{
       },
       {
         title: '商品图片',
-        dataIndex: 'picture',
-        key: 'picture',
+        dataIndex: 'productPicture',
+        key: 'productPicture',
         align: 'center',
-        render: (text, record) => <img src={record.picture} alt="产品图片" style={{width: 180}} />
+        render: (text, record) => <img src={record.productPicture} alt="产品图片" style={{width: 180}} />
       },
       {
         title: '商品名称',
-        dataIndex: 'name',
-        key: 'name',
+        dataIndex: 'productName',
+        key: 'productName',
         align: 'center'
       },
       {
         title: '所属分类',
-        dataIndex: 'type',
-        key: 'type',
+        dataIndex: 'categoryType',
+        key: 'categoryType',
         align: 'center',
+        render: (text, record) => (categoryMap[record.categoryType])
       },
       {
         title: '单价',
-        dataIndex: 'price',
-        key: 'price',
+        dataIndex: 'productPrice',
+        key: 'productPrice',
         align: 'center',
       },
       {
         title: '描述',
-        dataIndex: 'desc',
-        key: 'desc',
+        dataIndex: 'productDescription',
+        key: 'productDescription',
         width: 360,
-        align: 'center',
       },
       {
         title: '状态',
-        dataIndex: 'status',
-        key: 'status',
+        dataIndex: 'productStatus',
+        key: 'productStatus',
         align: 'center',
-        render: (text, record) => (record.status?'在架':'下架')
+        render: (text, record) => (record.productStatus?'在架':'下架')
       },
       {
         title: '操作',
@@ -154,10 +165,9 @@ export default class GoodsList extends React.Component{
         align: 'center',
         render: (text, record) => (
           <span>
-        <Button size="small" >{record.status?'下架':'上架'}</Button>
-        <Button size="small" onClick={()=>this.editShop(record)}>编辑</Button>
-        <Button size="small" onClick={()=>this.shopDetail(record)}>详情</Button>
-        <Button size="small" type='primary'>删除</Button>
+        <Button size="small" onClick={()=>this.updateProductStatus(record)}>{record.productStatus?'下架':'上架'}</Button>
+        <Button size="small" onClick={()=>this.editProduct(record)}>编辑</Button>
+        <Button size="small" type='primary' onClick={()=>this.delProduct(record.productId)}>删除</Button>
       </span>
         ),
       },
@@ -178,12 +188,14 @@ export default class GoodsList extends React.Component{
               </Col>
               <Col span={3}>
                 <Form.Item label='所属分类'>
-                  {getFieldDecorator('type',{initialValue: -1})(
+                  {getFieldDecorator('type',{initialValue: 1})(
                     <Select style={{ width: 80 }}>
-                      <Option value={-1}>全部</Option>
-                      <Option value={1}>果茶</Option>
-                      <Option value={0}>奶茶</Option>
-                      <Option value={2}>季节限定</Option>
+                      <Option value={1}>全部</Option>
+                      {
+                        categoryList.map((item,index)=>(
+                          <Option key={index} value={item.categoryType}>{item.categoryName}</Option>
+                        ))
+                      }
                     </Select>
                   )}
                 </Form.Item>

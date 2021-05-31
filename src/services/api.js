@@ -105,3 +105,63 @@ export async function delCategory(params) {
     data: stringify(params),
   });
 }
+
+export async function getProductPage(params) {
+  return request('api/shinetea/product/page', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function getProduct(params) {
+  return request('api/shinetea/product/detail', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function newProduct(params) {
+  return request('api/shinetea/product/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function editProduct(params) {
+  return request('api/shinetea/product/edit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function delProduct(params) {
+  return request('api/shinetea/product/del', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function updateProductStatus(params) {
+  return request('api/shinetea/product/status', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}

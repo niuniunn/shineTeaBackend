@@ -1,5 +1,6 @@
 import React from "react";
 import { stringify } from 'qs';
+import defaultSettings from '../../../src/defaultSettings';
 import {
   Button,
   Card,
@@ -289,7 +290,7 @@ export default class Category extends React.Component{
       name: 'file',
       action: '/img/',
       data: {
-        Token: '3c03d3c63c2fb600a3600d1fe5f6cd697817ff94:wf6DxVNWAlMjy9h_1orIjpf6_-I=:eyJkZWFkbGluZSI6MTYyMTUyMTc2NiwiYWN0aW9uIjoiZ2V0IiwidWlkIjoiNzM3OTYzIiwiYWlkIjoiMTc2OTI4MCIsImZyb20iOiJmaWxlIn0='
+        Token: defaultSettings.Token
       },
       onChange(info) {
         if (info.file.status !== 'uploading') {

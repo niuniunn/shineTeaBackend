@@ -30,4 +30,5 @@ module.exports = {
   },
   // "backEndUrl": "http://127.0.0.1:8080/",  //后台接口地址
   "backEndUrl": "http://82.157.175.93:8080/",  //后台接口地址
+  "Token": "3c03d3c63c2fb600a3600d1fe5f6cd697817ff94:wf6DxVNWAlMjy9h_1orIjpf6_-I=:eyJkZWFkbGluZSI6MTYyMTUyMTc2NiwiYWN0aW9uIjoiZ2V0IiwidWlkIjoiNzM3OTYzIiwiYWlkIjoiMTc2OTI4MCIsImZyb20iOiJmaWxlIn0="
 };

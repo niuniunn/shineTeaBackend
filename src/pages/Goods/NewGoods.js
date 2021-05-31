@@ -1,6 +1,8 @@
 import React from "react";
 import {Card, Form, Icon, Typography, Row, Col, Input, Select, InputNumber, Upload, message, Button,Descriptions,Modal} from "antd";
-import {primaryColor} from '@/defaultSettings'
+import defaultSettings, {primaryColor} from '@/defaultSettings'
+import {connect} from "dva";
+import {router} from "umi";
 
 const {Title} = Typography;
 const {Option} = Select;
@@ -23,6 +25,11 @@ function beforeUpload(file) {
   return isJpgOrPng && isLt2M;
 }
 
+@connect(({product,category})=>({
+  categoryList: category.categoryList,
+  isSuccess: product.isSuccess,
+  productInfo: product.productInfo
+}))
 @Form.create()
 export default class NewGoods extends React.Component{
 
@@ -32,7 +39,19 @@ export default class NewGoods extends React.Component{
       imageUrl: '',
       visible: false,
       currentIndex: -1,   //当前modal框编辑的数据索引
-      flag: 0,  //1编辑  0新增
+      flag: 0,  //1编辑规格  0新增规格
+      type: '',  //编辑商品or新增商品
+      categoryList: [],
+      productInfo: {
+        productId: "",
+        productName: "",
+        productPrice: "",
+        productDescription: "",
+        productPicture: "",
+        productSpecification: "",
+        categoryType: "",
+        productStatus: "",
+      },
       modalInfo: {
         title: "",
         specDetail: [
@@ -77,6 +96,37 @@ export default class NewGoods extends React.Component{
     }
   }
 
+  componentDidMount() {
+    const {type, id} = this.props.history.location.query;
+    this.getCategoryList();
+    if(type === 'edit') {
+      //编辑
+      const {dispatch} = this.props;
+      dispatch({
+        type: 'product/getProduct',
+        payload: {id}
+      }).then(()=>{
+        const productInfo = this.props.productInfo;
+        this.setState({
+          productInfo,
+          imageUrl: productInfo.productPicture,
+          specification: JSON.parse(productInfo.productSpecification)
+        })
+      })
+    }
+  }
+
+  getCategoryList = ()=> {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'category/getCategoryList'
+    }).then(()=>{
+      const categoryList = this.props.categoryList;
+      this.setState({
+        categoryList,
+      })
+    })
+  }
   showModal = (flag, modalInfo,index) => {
     if(!flag) {
      modalInfo = {
@@ -89,12 +139,11 @@ export default class NewGoods extends React.Component{
        ]
      };
     }
-    console.log(modalInfo);
     this.setState({
       visible: true,
       modalInfo,
       flag,
-      currentIndex: index?index:-1
+      currentIndex: index!==undefined?index:-1
     });
   };
 
@@ -125,6 +174,32 @@ export default class NewGoods extends React.Component{
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         console.log('Received values of form: ', values);
+        console.log("规格：",this.state.specification);
+        delete values.file;
+        values.picture = this.state.imageUrl;
+        values.specification = JSON.stringify(this.state.specification);
+        console.log(values);
+        const {dispatch} = this.props;
+        if(this.state.type === 'new') {
+          dispatch({
+            type: 'product/newProduct',
+            payload: values
+          }).then(()=>{
+            if(this.props.isSuccess) {
+              router.push('/goods/goodsList')
+            }
+          })
+        } else {
+          values.id = this.state.productInfo.productId;
+          dispatch({
+            type: 'product/editProduct',
+            payload: values
+          }).then(()=>{
+            if(this.props.isSuccess) {
+              router.push('/goods/goodsList')
+            }
+          })
+        }
       }
     });
   };
@@ -175,7 +250,7 @@ export default class NewGoods extends React.Component{
   }
 
   render() {
-    const {imageUrl, specification,modalInfo} = this.state;
+    const {imageUrl, specification,modalInfo,categoryList,productInfo} = this.state;
     const { getFieldDecorator } = this.props.form;
     const formItemLayout = {
       labelCol: {span: 4,},
@@ -187,56 +262,30 @@ export default class NewGoods extends React.Component{
         <div className="ant-upload-text">上传图片</div>
       </div>
     );
-    /*const spec = (
-      specification.map((item, index)=>(
-        <div key={index}>
-          <Row gutter={[16,32]}>
-            <Col push={1}>
-            </Col>
-          </Row>
-          <Row gutter={[16,24]}>
-            <Col span={8} push={1}>
-              <Form.Item label="规格名称">
-                {getFieldDecorator(`specification[${index}].title`,{rules:[{required:true,message: "请输入名称"}]})(
-                  <Input />
-                )}
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Button type="primary" onClick={()=>this.delItem(index)}>删除</Button>
-            </Col>
-          </Row>
-          {
-            item.specDetail.map((subItem, idx)=>(
-              <Row key={''+index+idx}>
-                <Col span={6} push={2}>
-                  <Form.Item label="规格项">
-                    {getFieldDecorator(`specification[${index}].specDetail[${idx}].name`,{initialValue: subItem.name,rules:[{required:true,message: "请输入子项名称"}]})(
-                      <Input />
-                    )}
-                  </Form.Item>
-                </Col>
-                <Col span={8} push={2}>
-                  <Form.Item label="子项价格">
-                    {getFieldDecorator(`specification[${index}].specDetail[${idx}].price`,{initialValue: subItem.price,rules:[{required:true,message: "请输入子项价格"}]})(
-                      <InputNumber step={0.1} min={0} max={999} />
-                    )}
-                  </Form.Item>
-                </Col>
-                <Col span={2} pull={2}>
-                  <div style={{color: primaryColor, cursor: 'pointer',textDecoration: 'underline',lineHeight: '38px'}} onClick={()=>this.delSubItem(index,idx)}>删除</div>
-                </Col>
-              </Row>
-            ))
+    const that = this;
+    const props = {
+      name: 'file',
+      action: '/img/',
+      data: {
+        Token: defaultSettings.Token
+      },
+      onChange(info) {
+        if (info.file.status !== 'uploading') {
+          that.setState({loading:true});
+          message.info('上传文件中，请稍等...',2);
+        }
+        if (info.file.status === 'done') {
+          const res = info.file.response;
+          if(res.code){
+            message.error(res.info);
+          }else {
+            that.setState({imageUrl:res.linkurl,loading:false});
+            message.success("导入成功")
           }
-          <Row>
-            <Col span={8} push={2}>
-              <div style={{color: primaryColor, marginLeft: 20, textDecoration: 'underline'}}><span onClick={()=>this.newSubItem(index)} style={{cursor: 'pointer'}}>新增子项</span></div>
-            </Col>
-          </Row>
-        </div>
-      ))
-    );*/
+        }
+
+      },
+    };
     const modalContent = (
       <div>
         规格名称：<Input style={{width: '180px', marginBottom: 10}} value={modalInfo.title} placeholder='请输入规格名称' onChange={(e)=>this.modalChange(e)} />
@@ -289,7 +338,7 @@ export default class NewGoods extends React.Component{
             <Col span={16}>
               <Form.Item label="商品名称">
                 {getFieldDecorator('name', {
-                  initialValue: ''/*shopInfo.name!==''?shopInfo.name:''*/,
+                  initialValue: productInfo.productName?productInfo.productName:"",
                   rules: [
                     {
                       required: true,
@@ -303,11 +352,15 @@ export default class NewGoods extends React.Component{
           <Row gutter={16}>
             <Col span={16}>
               <Form.Item label='所属分类'>
-                {getFieldDecorator('type',{initialValue: -1,rules:[{required:true,message: "请选择商品分类"}]})(
+                {getFieldDecorator('type',{
+                  initialValue: productInfo.categoryType?productInfo.categoryType:(categoryList[0]?categoryList[0].categoryType:''),
+                  rules:[{required:true,message: "请选择商品分类"}]})(
                   <Select style={{ width: 200 }}>
-                    <Option value={-1}>奶茶</Option>
-                    <Option value={1}>果茶</Option>
-                    <Option value={0}>纯茶</Option>
+                    {
+                      categoryList.map((item,index)=>(
+                        <Option key={index} value={item.categoryType}>{item.categoryName}</Option>
+                      ))
+                    }
                   </Select>
                 )}
               </Form.Item>
@@ -316,7 +369,9 @@ export default class NewGoods extends React.Component{
           <Row gutter={16}>
             <Col span={16}>
               <Form.Item label='单价'>
-                {getFieldDecorator('price',{initialValue: "",rules:[{required:true,message: "请输入单价"}]})(
+                {getFieldDecorator('price',{
+                  initialValue: productInfo.productPrice?productInfo.productPrice:'',
+                  rules:[{required:true,message: "请输入单价"}]})(
                   <InputNumber min={0} max={999} step={0.1} />
                 )}
               </Form.Item>
@@ -325,7 +380,9 @@ export default class NewGoods extends React.Component{
           <Row gutter={16}>
             <Col span={16}>
               <Form.Item label='描述'>
-                {getFieldDecorator('desc',{initialValue: "",rules:[{required:true,message: "请输入描述信息"}]})(
+                {getFieldDecorator('desc',{
+                  initialValue: productInfo.productDescription?productInfo.productDescription:'',
+                  rules:[{required:true,message: "请输入描述信息"}]})(
                   <TextArea rows={4} />
                 )}
               </Form.Item>
@@ -334,14 +391,15 @@ export default class NewGoods extends React.Component{
           <Row gutter={16}>
             <Col span={16}>
               <Form.Item label='商品图片'>
-                {getFieldDecorator('picture',{rules:[{required:true,message: "请输入单价"}]})(
+                {getFieldDecorator('file',{
+                  initialValue: {},
+                  rules:[{required:true,message: "请选择商品图片"}]})(
                   <Upload
-                    name="icon"
+                    name="file"
                     listType="picture-card"
                     className="avatar-uploader"
                     showUploadList={false}
-                    beforeUpload={beforeUpload}
-                    onChange={this.handleChange}
+                    {...props}
                   >
                     {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
                   </Upload>
@@ -375,6 +433,7 @@ export default class NewGoods extends React.Component{
           visible={this.state.visible}
           onOk={this.handleOk}
           onCancel={this.handleCancel}
+          destroyOnClose
           width={800}
         >
           {modalContent}
