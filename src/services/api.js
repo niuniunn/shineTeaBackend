@@ -75,3 +75,33 @@ export async function getCategoryList(params) {
     data: stringify(params),
   });
 }
+
+export async function newCategory(params) {
+  return request('api/shinetea/category/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function editCategory(params) {
+  return request('api/shinetea/category/edit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function delCategory(params) {
+  return request('api/shinetea/category/del', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}

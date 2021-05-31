@@ -73,6 +73,11 @@ export default {
       changeOrigin: true,
       pathRewrite: { '^/api': '' },
     },
+    '/img/': {
+      target: 'http://up.imgapi.com/',
+      changeOrigin: true,
+      pathRewrite: { '^/img': '' },
+    },
   },
   ignoreMomentLocale: true,
   lessLoaderOptions: {

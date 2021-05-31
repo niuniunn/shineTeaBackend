@@ -1,4 +1,5 @@
 import React from "react";
+import { stringify } from 'qs';
 import {
   Button,
   Card,
@@ -115,18 +116,25 @@ export default class Category extends React.Component{
       visible: false ,   //Modal框
       loading: false,  //上传图片
       imageUrl: '',
-      type: '',
-      name: '',
+      status: true,  //true为新增   false为编辑
+      category: {
+        /*categoryId: '',
+        imageUrl: '',
+        categoryName: '',
+        categoryType: ''*/
+      }
     }
   }
 
   componentDidMount() {
+    this.getList();
+  }
+  getList = ()=> {
     const {dispatch} = this.props;
     dispatch({
       type: 'category/getCategoryList'
     }).then(()=>{
       const categoryList = this.props.categoryList;
-      console.log(categoryList);
       this.setState({
         data: categoryList
       })
@@ -158,70 +166,77 @@ export default class Category extends React.Component{
       }
     );
   };
-  showModal = (record) => {
+  showModal = (record, status) => {
     console.log(record);
-    if(record !== undefined) {
+    if(!status) {
       //编辑
       this.setState({
-        imageUrl: record.icon,
-        name: record.name,
-        type: record.type
+        category: record,
+        imageUrl: record.categoryIcon,
+        status: false
       })
     } else {
       //新增
       this.setState({
+        category: {},
         imageUrl: '',
-        name: '',
-        type: ''
+        status: true
       })
     }
     this.setState({
       visible: true,
     });
   };
-  handleOk = e => {
-    console.log(e);
-    this.setState({
-      visible: false,
-    });
-  };
+
   handleCancel = e => {
-    console.log(e);
     this.setState({
       visible: false,
     });
   };
-  /*handleSearch = e => {
+  handleSubmit = e => {
     e.preventDefault();
+    this.setState({
+      visible: false,
+    });
+    const {status} = this.state;
     this.props.form.validateFields((err, values) => {
-      this.setState({
-        searchConditions: {...this.state.searchConditions,...values}
-      },()=>{
-        this.getList();
-      })
+      if (!err) {
+        console.log('Received values of form: ', values);
+        delete values.file;
+        values.categoryIcon = this.state.imageUrl;
+        const {dispatch} = this.props;
+        if(status) {
+          //新增
+          dispatch({
+            type: 'category/newCategory',
+            payload: values
+          }).then(()=>{
+            this.getList();
+          })
+        } else {
+          values.categoryId = this.state.category.categoryId;
+          console.log("参数：",values);
+          dispatch({
+            type: 'category/editCategory',
+            payload: values
+          }).then(()=>{
+            this.getList();
+          })
+        }
+      }
     });
   };
-  handleReset = () => {
-    this.props.form.resetFields();
-  };*/
-  //上传图片
-  handleChange = info => {
-    if (info.file.status === 'uploading') {
-      this.setState({ loading: true });
-      return;
-    }
-    if (info.file.status === 'done') {
-      // Get this url from response in real world.
-      getBase64(info.file.originFileObj, imageUrl =>
-        this.setState({
-          imageUrl,
-          loading: false,
-        }),
-      );
-    }
-  };
+  delCategory = id => {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'category/delCategory',
+      payload: {categoryId: id}
+    }).then(()=>{
+      this.getList();
+    })
+  }
   render() {
-    const {imageUrl, type, name} = this.state;
+    const {imageUrl, category} = this.state;
     const {getFieldDecorator} = this.props.form;
     const columns = [
       {
@@ -249,6 +264,7 @@ export default class Category extends React.Component{
         dataIndex: 'categoryIcon',
         key: 'categoryIcon',
         align: 'center',
+        render: (text, record) => (<img src={record.categoryIcon} alt="分类图标"/>)
       },
       {
         title: '操作',
@@ -256,8 +272,8 @@ export default class Category extends React.Component{
         align: 'center',
         render: (text, record) => (
           <span>
-        <Button size="small" onClick={()=>this.showModal(record)}>编辑</Button>
-        <Button size="small" type='primary'>删除</Button>
+        <Button size="small" onClick={()=>this.showModal(record,false)}>编辑</Button>
+        <Button size="small" type='primary' onClick={()=>this.delCategory(record.categoryId)}>删除</Button>
       </span>
         ),
       },
@@ -268,54 +284,79 @@ export default class Category extends React.Component{
         <div className="ant-upload-text">上传图片</div>
       </div>
     );
+    const that = this;
+    const props = {
+      name: 'file',
+      action: '/img/',
+      data: {
+        Token: '3c03d3c63c2fb600a3600d1fe5f6cd697817ff94:wf6DxVNWAlMjy9h_1orIjpf6_-I=:eyJkZWFkbGluZSI6MTYyMTUyMTc2NiwiYWN0aW9uIjoiZ2V0IiwidWlkIjoiNzM3OTYzIiwiYWlkIjoiMTc2OTI4MCIsImZyb20iOiJmaWxlIn0='
+      },
+      onChange(info) {
+        if (info.file.status !== 'uploading') {
+          that.setState({loading:true});
+          message.info('上传文件中，请稍等...',2);
+        }
+        if (info.file.status === 'done') {
+          const res = info.file.response;
+          if(res.code){
+            message.error(res.info);
+          }else {
+            that.setState({imageUrl:res.linkurl,loading:false});
+            message.success("导入成功")
+          }
+        }
+
+      },
+    };
     const modalContent = (
-      <div style={{marginLeft: 60}}>
-        分类编号：<Input style={{width: '180px', marginBottom: 10}} value={type} placeholder='请输入分类编号' /><br/>
-        分类名称：<Input style={{width: '180px', marginBottom: 10}} value={name} placeholder='请输入分类名称' /><br/>
-        分类图标：
-        <div style={{marginLeft: 70}}>
-          <Upload
-            name="icon"
-            listType="picture-card"
-            className="avatar-uploader"
-            showUploadList={false}
-            beforeUpload={beforeUpload}
-            onChange={this.handleChange}
-          >
-            {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
-          </Upload>
+      <Form onSubmit={this.handleSubmit}>
+        <div className="clearfix" style={{marginLeft: 60}}>
+          <Form.Item label="分类编号">
+            {getFieldDecorator('categoryType', {
+              initialValue: category.categoryType?category.categoryType:'',
+              rules: [{ required: true, message: '请输入分类编号' }],
+            })(
+              <Input placeholder='请输入分类编号' />,
+            )}
+          </Form.Item>
+          <Form.Item label="分类名称">
+            {getFieldDecorator('categoryName', {
+              initialValue: category.categoryName?category.categoryName:'',
+              rules: [{ required: true, message: '请输入分类名称' }],
+            })(
+              <Input placeholder='请输入分类名称' />,
+            )}
+          </Form.Item>
+          <Form.Item label="分类图标">
+            {getFieldDecorator('file', {
+              rules: [{ required: true, message: '请选择分类图标' }],
+            })(
+              <Upload
+                name="categoryIcon"
+                listType="picture-card"
+                className="avatar-uploader"
+                showUploadList={false}
+                accept=".jpg,.png,.jpeg" //上传照片接受格式
+                {...props}
+              >
+                {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
+              </Upload>
+            )}
+          </Form.Item>
+          <Form.Item style={{float: 'right'}}>
+            <Button type="primary" htmlType="submit">确定</Button>
+          </Form.Item>
+          <Form.Item style={{float: 'right', marginRight: 20}}>
+            <Button onClick={this.handleCancel}>取消</Button>
+          </Form.Item>
         </div>
-      </div>
+      </Form>
     );
     return (
       <Card>
         <Title level={4}>分类管理</Title>
         <Divider />
-        {/*<div className={styles.search}>
-          <Form className="ant-advanced-search-form" onSubmit={this.handleSearch}>
-            <Row gutter={20}>
-              <Col span={5}>
-                <Form.Item label='分类名称'>
-                  {getFieldDecorator('name',{initialValue: ''})(
-                    <Input />
-                  )}
-                </Form.Item>
-              </Col>
-              <Col span={4}>
-                <Form.Item label='分类编号'>
-                  {getFieldDecorator('type',{initialValue: ''})(
-                    <Input />
-                  )}
-                </Form.Item>
-              </Col>
-              <Col span={3}>
-                <Button type="primary" htmlType="submit">搜索</Button>
-                <Button type="default" htmlType="reset" style={{ marginLeft: 8}} onClick={this.handleReset}>清空</Button>
-              </Col>
-            </Row>
-          </Form>
-        </div>*/}
-        <Button type="primary" style={{marginBottom: 20}} onClick={()=>this.showModal()}>新增+</Button>
+        <Button type="primary" style={{marginBottom: 20}} onClick={()=>this.showModal(null,true)}>新增+</Button>
         <div className={styles.table}>
           <DndProvider backend={HTML5Backend}>
             <Table
@@ -332,7 +373,7 @@ export default class Category extends React.Component{
         <Modal
           title="分类编辑"
           visible={this.state.visible}
-          onOk={this.handleOk}
+          footer={null}
           onCancel={this.handleCancel}
         >
           {modalContent}
