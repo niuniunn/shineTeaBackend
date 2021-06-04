@@ -5,7 +5,6 @@ export default {
   namespace: 'coupon',
 
   state: {
-    isSuccess: false,
     couponCode: ''
   },
 
@@ -15,24 +14,20 @@ export default {
       if(response.code === 0) {
         message.success("创建成功！")
         yield put({
-          type: "modifyStatus",
-          payload: true,
+          type: "createCoupon",
+          payload: response.data,
         })
       } else {
         message.warning("操作失败");
-        yield put({
-          type: "modifyStatus",
-          payload: false,
-        })
       }
     },
   },
 
   reducers: {
-    modifyStatus(state, {payload}) {
+    createCoupon(state, {payload}) {
       return {
         ...state,
-        isSuccess: payload
+        couponCode: payload
       }
     },
   }

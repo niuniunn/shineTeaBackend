@@ -65,6 +65,17 @@ export async function findShopById(params) {
     data: stringify(params),
   });
 }
+
+export async function deleteShop(params) {
+  return request('api/shinetea/shop/del', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
 /*分类管理*/
 export async function getCategoryList(params) {
   return request('api/shinetea/category/list', {
@@ -106,6 +117,7 @@ export async function delCategory(params) {
   });
 }
 
+/*商品管理*/
 export async function getProductPage(params) {
   return request('api/shinetea/product/page', {
     method: 'POST',
@@ -166,6 +178,38 @@ export async function updateProductStatus(params) {
   });
 }
 
+/*订单管理*/
+export async function getOrderPage(params) {
+  return request('api/shinetea/order/page', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function getOrderDetail(params) {
+  return request('api/shinetea/order/managedetail', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+export async function updateOrderStatus(params) {
+  return request('api/shinetea/order/status', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: stringify(params),
+  });
+}
+
+/*会员管理*/
 export async function getMemberPage(params) {
   return request('api/shinetea/member/page', {
     method: 'POST',
@@ -176,6 +220,7 @@ export async function getMemberPage(params) {
   });
 }
 
+/*优惠券管理*/
 export async function newCoupon(params) {
   return request('api/shinetea/coupon/create', {
     method: 'POST',

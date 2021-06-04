@@ -20,7 +20,7 @@ export default class Shop extends React.Component{
         size: 10,
         name: '',
         address: '',
-        isOpen: 1
+        isOpen: -1
       },
       currentPage: 1,
       total: 0,
@@ -87,6 +87,18 @@ export default class Shop extends React.Component{
     })
   }
 
+  delShop = (record)=> {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'shop/deleteShop',
+      payload: {
+        id: record.shopId
+      }
+    }).then(()=>{
+      this.getShopPage();
+    })
+  }
+
 
   render() {
     const {dataSource} = this.state;
@@ -138,7 +150,7 @@ export default class Shop extends React.Component{
         <Button size="small" onClick={()=>this.updateStatus(record)}>{record.isOpen?'禁用':'启用'}</Button>
         <Button size="small" onClick={()=>this.editShop(record)}>编辑</Button>
         <Button size="small" onClick={()=>this.shopDetail(record)}>详情</Button>
-        <Button size="small" type='primary'>删除</Button>
+        <Button size="small" type='primary' onClick={()=>this.delShop(record)}>删除</Button>
       </span>
         ),
       },
@@ -150,7 +162,7 @@ export default class Shop extends React.Component{
           <Row gutter={20}>
             <Col span={5}>
               <Form.Item label='门店名称'>
-                {getFieldDecorator('shopName',{initialValue: ''})(
+                {getFieldDecorator('name',{initialValue: ''})(
                   <Input />
                 )}
               </Form.Item>

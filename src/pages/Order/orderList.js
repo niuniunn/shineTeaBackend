@@ -3,63 +3,74 @@ import {Button, Card, Col, Form, Input, Row, Select, Typography, DatePicker, Tab
 import moment from 'moment';
 import styles from "@/assets/common.less";
 import {router} from "umi";
+import {connect} from "dva";
 
 const {Option} = Select;
 const { Title } = Typography;
 const { MonthPicker, RangePicker } = DatePicker;
 const dateFormat = 'YYYY/MM/DD';
 
+@connect(({order})=>({
+  orderPage: order.orderPage,
+}))
 @Form.create()
 export default class OrderList extends React.Component{
   constructor(props) {
     super(props);
     this.state = {
-      dataSource: [
-        {
-          key: 1,
-          id: 20210419172466845,
-          buyerName: '张三',
-          orderAmount: 34,
-          type: 1,
-          orderStatus: 0,
-          createTime: '2021-04-19 16:33:55'
-        },
-        {
-          key: 2,
-          id: 20210419172466845,
-          buyerName: '张三',
-          orderAmount: 34,
-          type: 1,
-          orderStatus: 1,
-          createTime: '2021-04-19 14:15:36'
-        },
-        {
-          key: 3,
-          id: 20210419172466845,
-          buyerName: '张三',
-          orderAmount: 34,
-          type: 2,
-          orderStatus: 2,
-          createTime: '2021-04-19 12:23:14'
-        },
-      ],
+      dataSource: [],
+      searchConditions: {
+        page: 1,
+        size: 10,
+        orderId: '',
+        startTime: '2021-05-01',
+        endTime: '2021-06-21',
+        orderStatus: -1
+      },
+      currentPage: 1,
+      total: 0,
     }
   }
+  componentDidMount() {
+    this.getOrderPage();
+  }
+
   handleSearch = e => {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
+      console.log(values);
+      values.startTime = values.date[0].format("yyyy-MM-DD");
+      values.endTime = values.date[1].format("yyyy-MM-DD");
+      delete values.date;
       this.setState({
         searchConditions: {...this.state.searchConditions,...values}
       },()=>{
-        this.getList();
+        this.getOrderPage();
       })
     });
   };
   handleReset = () => {
     this.props.form.resetFields();
   };
-  orderDetail = ()=> {
-    router.push('/order/orderDetail');
+  orderDetail = (record)=> {
+    router.push('/order/orderDetail?orderId=' + record.orderId);
+  }
+  getOrderPage = ()=> {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'order/getOrderPage',
+      payload: {
+        ...this.state.searchConditions,
+        page: this.state.currentPage,
+      }
+    }).then(()=>{
+      const orderPage = this.props.orderPage;
+      this.setState({
+        dataSource: orderPage.data,
+        currentPage: orderPage.page,
+        total: orderPage.total
+      })
+    })
   }
   render() {
     const {getFieldDecorator} = this.props.form;
@@ -74,8 +85,8 @@ export default class OrderList extends React.Component{
       },
       {
         title: '订单编号',
-        dataIndex: 'id',
-        key: 'id',
+        dataIndex: 'orderId',
+        key: 'orderId',
       },
       {
         title: '买家姓名',
@@ -90,15 +101,15 @@ export default class OrderList extends React.Component{
       },
       {
         title: '订单类型',
-        dataIndex: 'type',
-        key: 'type',
+        dataIndex: 'orderType',
+        key: 'orderType',
         align: 'center',
-        render: (text, record) => (record.type==1?'自取':'外卖')
+        render: (text, record) => (record.orderType==1?'自取':'外卖')
       },
       {
         title: '订单状态',
-        dataIndex: 'status',
-        key: 'status',
+        dataIndex: 'orderStatus',
+        key: 'orderStatus',
         align: 'center',
         render: (text, record) => {
           switch (record.orderStatus) {
@@ -133,14 +144,14 @@ export default class OrderList extends React.Component{
             <Row gutter={20}>
               <Col span={6}>
                 <Form.Item label='订单编号'>
-                  {getFieldDecorator('id',{initialValue: ''})(
+                  {getFieldDecorator('orderId',{initialValue: ''})(
                     <Input />
                   )}
                 </Form.Item>
               </Col>
               <Col span={5}>
                 <Form.Item label='下单日期'>
-                  {getFieldDecorator('name',{initialValue: null})(
+                  {getFieldDecorator('date',{initialValue: null})(
                     <RangePicker
                       // defaultValue={[moment('2015/01/01', dateFormat), moment('2015/01/01', dateFormat)]}
                       format={dateFormat}
@@ -148,9 +159,9 @@ export default class OrderList extends React.Component{
                   )}
                 </Form.Item>
               </Col>
-              <Col span={3}>
+              {/*<Col span={3}>
                 <Form.Item label='订单类型'>
-                  {getFieldDecorator('type',{initialValue: -1})(
+                  {getFieldDecorator('orderType',{initialValue: -1})(
                     <Select style={{ width: 80 }}>
                       <Option value={-1}>全部</Option>
                       <Option value={1}>自取</Option>
@@ -158,7 +169,7 @@ export default class OrderList extends React.Component{
                     </Select>
                   )}
                 </Form.Item>
-              </Col>
+              </Col>*/}
               <Col span={3}>
                 <Form.Item label='订单状态'>
                   {getFieldDecorator('orderStatus',{initialValue: -1})(

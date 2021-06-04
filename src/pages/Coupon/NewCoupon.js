@@ -1,10 +1,14 @@
 import React from "react";
-import {Button, Card, Col, DatePicker, Form, Icon, Input, InputNumber, Row, Select, Typography, Upload} from "antd";
+import {Button, Card, Col, Modal, DatePicker, Form, Icon, Input, InputNumber, Row, Select, Typography, Upload} from "antd";
+import {connect} from "dva";
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 const {Option} = Select;
 
+@connect(({coupon})=>({
+  couponCode: coupon.couponCode,
+}))
 @Form.create()
 export default class NewCoupon extends React.Component{
 
@@ -16,9 +20,30 @@ export default class NewCoupon extends React.Component{
         values.endTime = values.time[1].format("yyyy-MM-DD");
         delete values.time;
         console.log('Received values of form: ', values);
+
+        const {dispatch} = this.props;
+        dispatch({
+          type: 'coupon/newCoupon',
+          payload: values
+        }).then(()=>{
+          console.log(this.props.couponCode);
+          this.showModal();
+        })
       }
     });
   };
+
+  showModal = ()=> {
+    let that = this;
+    Modal.info({
+      title: '优惠码',
+      content: that.props.couponCode,
+      okText: '确定',
+      onOk() {
+        console.log('关闭');
+      },
+    });
+  }
 
   render() {
     const { getFieldDecorator } = this.props.form;

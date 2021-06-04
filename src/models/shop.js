@@ -1,4 +1,4 @@
-import {editShop, findShopById, getShopList, newShop, updateStatus} from "@/services/api";
+import {deleteShop, editShop, findShopById, getShopList, newShop, updateStatus} from "@/services/api";
 import {message} from "antd";
 import {addKey} from "@/utils/dataClean";
 
@@ -79,6 +79,22 @@ export default {
         })
       } else {
         message.warning("查询失败");
+      }
+    },
+    *deleteShop({state, payload}, {call,put}) {
+      const response = yield call(deleteShop, payload);
+      if(response.code === 0) {
+        message.success("删除成功！");
+        yield put({
+          type: "modifyStatus",
+          payload: true,
+        })
+      } else {
+        message.warning("删除失败");
+        yield put({
+          type: "modifyStatus",
+          payload: false,
+        })
       }
     },
   },

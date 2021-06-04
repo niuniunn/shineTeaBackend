@@ -99,6 +99,7 @@ export default class NewGoods extends React.Component{
   componentDidMount() {
     const {type, id} = this.props.history.location.query;
     this.getCategoryList();
+    this.setState({type});
     if(type === 'edit') {
       //编辑
       const {dispatch} = this.props;
